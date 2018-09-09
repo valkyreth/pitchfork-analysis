@@ -5,13 +5,13 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-conn = sqlite3.connect('D:/Sem7/minor/database.sqlite')
+conn = sqlite3.connect('pitchfork.sqlite')
 c = conn.cursor()
 sns.set(style="white", context="talk")
 rs = np.random.RandomState(8)
 
 # Set up the matplotlib figure
-f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(7, 5), sharex=True)
+#f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(7, 5), sharex=True)
 
 
 def read_from_db():
@@ -63,14 +63,19 @@ def read_from_db():
     y_pos = [i for i, _ in enumerate(l)]
     print(l)
     m = df2[1].tolist()
-    plt.bar(m,y_pos)
-    plt.yticks(y_pos, l)
+    print(m)
+
+
+    sns.barplot(m, l, data=df2)
+    plt.xlim(6.5, 7.5)
+    #plt.bar(m,y_pos)
+    #plt.yticks(y_pos, l)
     #plt.legend()
     #plt.xlabel('bar number')
     #plt.ylabel('bar height')
 
     #plt.title('Epic Graph\nAnother Line! Whoa')
-    plt.tight_layout(w_pad=2)
+    plt.tight_layout()
     plt.show()
 
 read_from_db()
