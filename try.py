@@ -57,17 +57,21 @@ def read_from_db():
     #print(df1)
     q2 = c.execute('select g.genre,avg(r.score) from genres g, reviews r where g.reviewid = r.reviewid group by g.genre order by avg(r.score) desc')
     df2 = DataFrame(q2.fetchall())
-    #print(df2)
-    #print(type(df2[0]))
+    df2 = df2.drop(index=4)
     l = df2[0].tolist()
     y_pos = [i for i, _ in enumerate(l)]
-    print(l)
     m = df2[1].tolist()
-    print(m)
+
+    g = sns.barplot(m, l, data=df2)
+    #plt.xlim(6.5, 7.5)
+    r = np.linspace(0, 9, 10)
+    j = 0
+
+    for row in df2.itertuples():
+        g.text(x=row[2]+0.2, y=j, s='{:4.2f}'.format(row[2]), color='black', ha='center')
+        j += 1
 
 
-    sns.barplot(m, l, data=df2)
-    plt.xlim(6.5, 7.5)
     #plt.bar(m,y_pos)
     #plt.yticks(y_pos, l)
     #plt.legend()
