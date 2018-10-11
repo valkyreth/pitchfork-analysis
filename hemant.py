@@ -48,7 +48,7 @@ def training(x, y, model):
     # lr.fit(x, y)
     # with open(model.__class__.__name__, 'wb') as file:
     #     pickle.dump(lr, file)
-    with open(model.__class__.__name__, 'wb') as file:
+    with open(f"models/{model.__class__.__name__}", 'wb') as file:
         lr = pickle.load(file)
     return lr
 

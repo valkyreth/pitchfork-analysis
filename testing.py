@@ -80,6 +80,8 @@ def genre_change():
         j += 1
 
 artists_score()
+weekday_score()
+genre_change()
 plt.tight_layout()
 plt.show()
 conn.close()

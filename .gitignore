@@ -1,0 +1,5 @@
+dataframe
+*.pkl
+*.sqlite
+models/
+__pycache__

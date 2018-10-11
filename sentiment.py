@@ -80,7 +80,7 @@ def blobbing():
     # with open('NaiveBayes', 'rb') as file:
     #     cl = pickle.load(file)
 
-    vectorizer = TfidfVectorizer()
+    vectorizer = TfidfVectorizer(sublinear_tf=True, ngram_range=(1,2), min_df=5, norm='l2')
     X_train = vectorizer.fit_transform(train['processed'].tolist())
     X_test = vectorizer.transform(test['processed'].tolist())
     y_train = train['rounded_score'].tolist()
