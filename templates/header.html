@@ -28,7 +28,15 @@
                         </ul>
                     </li>
                     <li>
-                        <a href="#">Sentiment Prediction</a>
+                        <a href="predict" id="prediction">Sentiment Prediction</a>
+                    </li>
+                    <li class="active">
+                        <a href="#searchBox" data-toggle="collapse" aria-expanded="false">Search database</a>
+                        <form action="{{ url_for('search') }}" method="post" class="collapse list-unstyled" id="searchBox">
+                            &nbsp&nbsp&nbsp&nbsp
+                            <input type="text" placeholder="..artist" name="artist">
+                            <input type="submit" value="OK">
+                        </form>
                     </li>
                     <li>
                         <a href="#">Insights</a>
@@ -64,15 +72,21 @@
                     </div>
                 </nav>
             </div>
+            <div id="dynamic"> {% block body %}{% endblock %} </div>
         </div>
-         <script type="text/javascript">
-             $(document).ready(function () {
-                 $('#sidebarCollapse').on('click', function () {
-                     $('#sidebar').toggleClass('active');
-                     $(this).toggleClass('active');
-                 });
-             });
-         </script>
-        {% block body %}{% endblock %}
+
+
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $('#sidebarCollapse').on('click', function () {
+                    $('#sidebar').toggleClass('active');
+                    $(this).toggleClass('active');
+                });
+                // $('#prediction').click(function () {
+                //     $('#dynamic').load('predict #predictionForm');
+                // });
+            });
+        </script>
     </body>
 </html>

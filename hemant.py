@@ -1,5 +1,5 @@
 import pandas as pd
-import database_connection as db
+#import database_connection as db
 import matplotlib.pyplot as plt
 import pickle
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -48,26 +48,26 @@ def training(x, y, model):
     # lr.fit(x, y)
     # with open(model.__class__.__name__, 'wb') as file:
     #     pickle.dump(lr, file)
-    with open(f"models/{model.__class__.__name__}", 'wb') as file:
+    with open(f'models/{model.__class__.__name__}', 'rb') as file:
         lr = pickle.load(file)
     return lr
 
 
 for i in models:
     model = training(X_train, y_train, i)
-    print(i.__class__.__name__ + " : " + model.score(X_test, y_test))
+    print(i.__class__.__name__ + " : " + str(model.score(X_test, y_test)))
 
 
-# CV = 5
-# cv_df = pd.DataFrame(index=range(CV * len(models)))
-# entries = []
-# for model in models:
-#     model_name = model.__class__.__name__
-#     accuracies = cross_val_score(model, X_train, y_train, scoring='accuracy', cv=CV)
-#     for fold_idx, accuracy in enumerate(accuracies):
-#         entries.append((model_name, fold_idx, accuracy))
-# cv_df = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
-# sns.boxplot(x='model_name', y='accuracy', data=cv_df)
-# sns.stripplot(x='model_name', y='accuracy', data=cv_df,
-#               size=8, jitter=True, edgecolor="gray", linewidth=2)
-# plt.show()
+CV = 5
+cv_df = pd.DataFrame(index=range(CV * len(models)))
+entries = []
+for model in models:
+    model_name = model.__class__.__name__
+    accuracies = cross_val_score(model, X_train, y_train, scoring='accuracy', cv=CV)
+    for fold_idx, accuracy in enumerate(accuracies):
+        entries.append((model_name, fold_idx, accuracy))
+cv_df = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
+sns.boxplot(x='model_name', y='accuracy', data=cv_df)
+sns.stripplot(x='model_name', y='accuracy', data=cv_df,
+              size=8, jitter=True, edgecolor="gray", linewidth=2)
+plt.show()

@@ -3,3 +3,5 @@ dataframe
 *.sqlite
 models/
 __pycache__
+X_train
+vectorizer*
