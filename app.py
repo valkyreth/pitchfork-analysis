@@ -61,7 +61,6 @@ def models(name):
 @app.route('/genre_albums', methods=['GET', 'POST'])
 def genre_albums():
     name = request.form['Genre']
-    print(name)
     albums = get_albums(name)
     return render_template('albums.html', albums=albums)
 
