@@ -5,3 +5,5 @@ models/
 __pycache__
 X_train
 vectorizer*
+sentiment - Copy.py
+/*.png

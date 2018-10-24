@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, request, url_for, flash
-from sentiment import predictor, artist_info, get_artist, review_content
+from sentiment import predictor, artist_info, get_artist, review_content, get_score, conf_mat
 import json
+from graphs import *
 
 app = Flask(__name__)
 app.secret_key = "key_pitchfork"
@@ -44,6 +45,17 @@ def get_review():
     print(id, type(id))
     content = review_content(int(id))
     return json.dumps({'status': 'OK', 'data': content})
+
+@app.route('/insights', methods=['GET', 'POST'])
+def insights():
+    graphs = Graph().all_graphs()
+    return render_template('graphs.html', graphs=graphs)
+
+@app.route('/models/<name>', methods=['GET', 'POST'])
+def models(name):
+    score = get_score(name)
+    graph = conf_mat(name)
+    return render_template(f'{name}.html', score=score, graph=graph)
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -5,7 +5,12 @@ import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, RidgeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import cross_val_score
 from nltk.corpus import stopwords
 import string
 from sklearn.metrics import confusion_matrix
@@ -14,6 +19,10 @@ import matplotlib.pyplot as plt
 import time
 import io
 import base64
+from wordcloud import WordCloud, ImageColorGenerator
+import numpy as np
+from PIL import Image
+from graphs import Graph
 
 pd.set_option('display.max_columns', 10)
 pd.set_option('display.width', 200)
@@ -23,8 +32,74 @@ pd.set_option('display.width', 200)
 
 stop_words = set(stopwords.words('english') + list(string.punctuation))
 
+models = {
+    'RandomForestClassifier': RandomForestClassifier(n_estimators=200, random_state=1),
+    'LinearSVC': LinearSVC(multi_class='crammer_singer', random_state=1),
+    'LogisticRegression': LogisticRegression(solver='newton-cg', multi_class='multinomial'),
+    #'KNeighborsClassifier': KNeighborsClassifier(),
+    'RidgeClassifier': RidgeClassifier(random_state=1),
+    #'MLPClassifier': MLPClassifier(random_state=1),
+    'MultinomialNB': MultinomialNB()
+}
+
+with open('X_train', 'rb') as file, open('vectorizer(1)', 'rb') as vfile, open('dataframe', 'rb') as dfile:
+    X_train = pickle.load(file)
+    vectorizer = pickle.load(vfile)
+    df = pickle.load(dfile)
+
+train, test = train_test_split(df, test_size=0.25, stratify=df.rounded_score, random_state=1)
+
+X_test = vectorizer.transform(test['processed'].tolist())
+y_train = train['rounded_score'].tolist()
+y_test = test['rounded_score'].tolist()
+
+def get_score(model):
+    with open(f'./models/{model}', 'rb') as file:
+        loaded = pickle.load(file)
+    return loaded.score(X_test, y_test)
+
+
+def compare_models():
+
+    with open('X_train', 'rb') as file, open('vectorizer(1)', 'rb') as vfile, open('dataframe', 'rb') as dfile:
+        X_train = pickle.load(file)
+        vectorizer = pickle.load(vfile)
+        df = pickle.load(dfile)
+
+    train, test = train_test_split(df, test_size=0.25, stratify=df.rounded_score, random_state=1)
+
+    X_test = vectorizer.transform(test['processed'].tolist())
+    y_train = train['rounded_score'].tolist()
+    y_test = test['rounded_score'].tolist()
+
+    for i in models:
+        model = training(X_train, y_train, models[i])
+        print(f'{i} : {model.score(X_test, y_test)}')
+
+    entries = []
+    for model_name in models:
+        accuracies = cross_val_score(models[model_name], X_train, y_train, scoring='accuracy', cv=5)
+        for fold_idx, accuracy in enumerate(accuracies):
+            entries.append((model_name, fold_idx, accuracy))
+    cv_df = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
+    sns.boxplot(x='model_name', y='accuracy', data=cv_df)
+    sns.stripplot(x='model_name', y='accuracy', data=cv_df,
+                  size=8, jitter=True, edgecolor="gray", linewidth=2)
+    plt.show()
+
+def training(x, y, model):
+    try:
+        with open(f'./models/{model.__class__.__name__}', 'rb') as file:
+            loaded = pickle.load(file)
+    except FileNotFoundError:
+        with open(f'./models/{model.__class__.__name__}', 'wb') as file:
+            current = model
+            current.fit(x,y)
+            pickle.dump(current, file)
+            loaded = current
+    return loaded
+
 def blobbing():
-    print('start process', time.asctime())
     # df = pd.read_sql_query("select c.reviewid, c.content, r.score from content c, reviews r where c.reviewid = r.reviewid", conn)
     #
     # sentiment = []
@@ -46,83 +121,29 @@ def blobbing():
     # with open('dataframe', 'wb') as file:
     #     pickle.dump(df, file)
 
-    #print(df.head(10))
-
     train, test = train_test_split(df, test_size=0.25, stratify=df.rounded_score, random_state=1)
 
-
-    # json_dump = []
-    # train = 1
-    # for index, row in df.iterrows():
-    #     if train <= 10:
-    #         json_dump.append({'text': row['content'], 'label': row['sentiment']})
-    #     train += 1
-    #
-    #
-    # json_string = json.dumps(json_dump)
-    # with open('sentiment.json', 'w') as file:
-    #     file.write(json_string)
-
-    # small_train, small_test = [], []
-    #
-    # for i in range(500):
-    #     small_train.append((train.iloc[i]['content'], train.iloc[i]['sentiment']))
-    # #
-    # for i in range(500):
-    #     small_test.append((test.iloc[i]['content'], test.iloc[i]['sentiment']))
-
-    # with open('sentiment.json', 'r') as file:
-    #     cl = NaiveBayesClassifier(file, format='json')
-
-    # cl = NaiveBayesClassifier(small_train)
-    # with open('NaiveBayes', 'wb') as file:
-    #     pickle.dump(cl, file)
-
-    # with open('NaiveBayes', 'rb') as file:
-    #     cl = pickle.load(file)
-    # print('starting vectorisation', time.asctime())
     # #vectorizer = TfidfVectorizer(sublinear_tf=True, ngram_range=(1,2), min_df=5, max_df=0.5)
     # #X_train = vectorizer.fit_transform(train['processed'].tolist())
-    with open('X_train', 'rb') as file, open('vectorizer(1)', 'rb') as vfile:
-        X_train = pickle.load(file)
-        vectorizer = pickle.load(vfile)
-    X_test = vectorizer.transform(test['processed'].tolist())
+    #X_test = vectorizer.transform(test['processed'].tolist())
     #y_train = train['rounded_score'].tolist()
-    y_test = test['rounded_score'].tolist()
-    print('starting model', time.asctime())
-
-    # lr = LogisticRegression(solver='lbfgs', multi_class='multinomial')
-    # lr.fit(X_train, y_train)
-    with open('LogisticRegression (newton)', 'rb') as file:
-        lr = pickle.load(file)
-    lr_predictor = lr.predict(X_test)
-    # for i in range(20):
-    #     print(test.iloc[i]['reviewid'], test.iloc[i]['score'], predictor[i])
-    print('Logistic regression =', lr.score(X_test, y_test))
-    print('starting graph', time.asctime())
+    #y_test = test['rounded_score'].tolist()
 
 
-    # nb = MultinomialNB()
-    # nb.fit(X_train, y_train)
-    # print('Naive Bayes =', nb.score(X_test, y_test))
-
-
-    labels = [i for i in range(11)]
-    conf_mat = confusion_matrix(y_test, lr_predictor)
+def conf_mat(model):
+    with open(f'./models/{model}', 'rb') as file:
+        loaded = pickle.load(file)
+    predictor = loaded.predict(X_test)
+    labels = range(11)
+    conf_mat = confusion_matrix(y_test, predictor)
     fig, ax = plt.subplots(figsize=(10, 10))
     sns.heatmap(conf_mat, annot=True, fmt='d',
                 xticklabels=labels, yticklabels=labels)
     plt.ylabel('Actual')
     plt.xlabel('Predicted')
+    #return Graph().create_graph(plt)
     plt.show()
-    print('end', time.asctime())
 
-    # prob_dist = cl.prob_classify((df.iloc[14000]['content']))
-    # print(prob_dist.max(), prob_dist.prob('pos'), prob_dist.prob('neg'))
-    # print(cl.accuracy(small_test))
-
-    # blob = TextBlob(df.iloc[4]['content'])
-    # print(blob.sentiment)
 def process(text):
     tokens = TextBlob(text).words
     tokens = [t.lemmatize() for t in tokens if t not in stop_words]
@@ -152,9 +173,13 @@ def artist_info(query):
 
 def get_artist(name):
     conn = sqlite3.connect('pitchfork.sqlite')
-    df = pd.read_sql_query('select r.reviewid, r.title, r.score, r.pub_year, g.genre from reviews r, genres g where artist = ? and r.reviewid = g.reviewid', params=(name.lower(), ), con=conn)
+    df = pd.read_sql_query('select r.reviewid, r.title, r.score, r.pub_year, g.genre from reviews r, genres g where artist = ? and r.reviewid = g.reviewid',
+                           params=(name.lower(), ), con=conn)
+    conn.close()
+
     df_grouped = df.groupby(['title'])
     new_df = pd.DataFrame(columns=['reviewid', 'title', 'score', 'genre'])
+
     album_list = []
     for title, group in df_grouped:
         genre = []
@@ -166,27 +191,20 @@ def get_artist(name):
         d = {'reviewid': reviewid, 'title': title.title(), 'score': score, 'year': year, 'genre': genre}
         album_list.append(d)
         new_df = new_df.append(d, ignore_index=True)
+
     new_df['year'] = new_df['year'].apply(int)
     new_df = new_df.sort_values('year', axis=0).reset_index(drop=True)
     album_list.sort(key=lambda x: x['year'])
-    graph = create_graph(new_df)
-    conn.close()
-    return album_list, graph
+    new_df['title'] = new_df['title'].apply(lambda x: x[:15] + '...' if len(x) >= 15 else x)
 
-def create_graph(df):
-    df['title'] = df['title'].apply(lambda x: x[:15] + '...' if len(x) >= 15 else x)
-    fig, ax = plt.subplots()
-    sns.lineplot(df['title'], df['score'])
+    sns.lineplot(new_df['title'], new_df['score'])
 
-    #ax.tick_params(axis='x', labelsize='small')
+    # ax.tick_params(axis='x', labelsize='small')
     plt.xticks(rotation=45)
     plt.tight_layout()
-    img = io.BytesIO()
-    plt.savefig(img, format='png')
-    img.seek(0)
-    graph_url = base64.b64encode(img.getvalue()).decode()
-    plt.close()
-    return 'data:image/png;base64,{}'.format(graph_url)
+    graph = Graph().create_graph(plt)
+
+    return album_list, graph
 
 def review_content(id):
     conn = sqlite3.connect('pitchfork.sqlite')
@@ -197,9 +215,27 @@ def review_content(id):
     conn.close()
     return content
 
+def display_scores():
+    with open('X_train', 'rb') as file, open('vectorizer(1)', 'rb') as vfile:
+        tfidf_result = pickle.load(file)
+        vectorizer = pickle.load(vfile)
+
+    scores = zip(vectorizer.get_feature_names(), np.asarray(tfidf_result.sum(axis=0)).ravel())
+    sorted_scores = sorted(scores, key=lambda x: x[1], reverse=True)
+
+    wave_mask = np.array(Image.open("./guitar2.png"))
+    image_colors = ImageColorGenerator(wave_mask)
+    wc = WordCloud(width=1280, height=720, mode='RGBA', background_color='white', max_words=2000, mask=wave_mask, color_func=image_colors).fit_words(dict(sorted_scores))
+
+    plt.imshow(wc, interpolation="bilinear")
+    plt.axis("off")
+    plt.show()
 
 if __name__ == '__main__':
     #blobbing()
     #artist_info('queen')
     #get_artist('queens of the stone age')
-    review_content(22703)
+    #review_content(22703)
+    #word_cloud()
+    #display_scores()
+    compare_models()
