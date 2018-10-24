@@ -27,9 +27,9 @@ def index():
 @app.route("/search")
 def search():
     text = request.args['searchText']
-    text = text + "%"
+    text = (f'%{text}%', )
     result = []
-    for row in g.db.execute('select distinct(artist) from artists where artist like "%s" '%(text)):
+    for row in g.db.execute('select distinct(artist) from artists where artist like ?', text):
         result.append(row[0].title())
     return json.dumps({"results": result[:6]})
 
@@ -59,7 +59,7 @@ def result():
         s = request.form['review']
         res = str(predictor(s)[0])
         flash(f'The predicted score is {res}')
-        return redirect(url_for('predict'))
+        return redirect(url_for('prediction'))
 
 
 @app.route('/models/<name>', methods=['POST', 'GET'])
@@ -72,7 +72,6 @@ def models(name):
 @app.route('/insights', methods=['GET', 'POST'])
 def insights():
     graphs = Graph().all_graphs()
-    print(graphs)
     return render_template('graphs.html', graphs=graphs)
 
 

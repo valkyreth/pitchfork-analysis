@@ -25,10 +25,15 @@ from graphs import Graph
 pd.set_option('display.max_columns', 10)
 pd.set_option('display.width', 200)
 
-# conn = sqlite3.connect('pitchfork.sqlite')
-# c = conn.cursor()
-
 stop_words = set(stopwords.words('english') + list(string.punctuation))
+
+models_simple = {
+    'RandomForestClassifier': RandomForestClassifier(random_state=1),
+    'LinearSVC': LinearSVC(random_state=1),
+    'LogisticRegression': LogisticRegression(),
+    'RidgeClassifier': RidgeClassifier(random_state=1),
+    'MultinomialNB': MultinomialNB()
+}
 
 models = {
     'RandomForestClassifier': RandomForestClassifier(n_estimators=200, random_state=1),
@@ -68,28 +73,29 @@ def compare_models():
     y_test = test['rounded_score'].tolist()
 
     for i in models:
-        model = training(X_train, y_train, models[i])
+        model = training(X_train, y_train, i)
         print(f'{i} : {model.score(X_test, y_test)}')
 
     entries = []
-    for model_name in models:
-        accuracies = cross_val_score(models[model_name], X_train, y_train, scoring='accuracy', cv=5)
+    print('start', time.asctime())
+    for model_name, model in models_simple.items():
+        accuracies = cross_val_score(model, X_train, y_train, scoring='accuracy', cv=3)
         for fold_idx, accuracy in enumerate(accuracies):
             entries.append((model_name, fold_idx, accuracy))
+        print(model_name, 'done', time.asctime())
     cv_df = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
     sns.boxplot(x='model_name', y='accuracy', data=cv_df)
-    sns.stripplot(x='model_name', y='accuracy', data=cv_df,
-                  size=8, jitter=True, edgecolor="gray", linewidth=2)
+    sns.stripplot(x='model_name', y='accuracy', data=cv_df,nsize=8, jitter=True, edgecolor="gray", linewidth=2)
     plt.show()
 
 
 def training(x, y, model):
     try:
-        with open(f'./models/{model.__class__.__name__}', 'rb') as file:
+        with open(f'./models/{model}', 'rb') as file:
             loaded = pickle.load(file)
     except FileNotFoundError:
-        with open(f'./models/{model.__class__.__name__}', 'wb') as file:
-            current = model
+        with open(f'./models/{model}', 'wb') as file:
+            current = models[model]
             current.fit(x,y)
             pickle.dump(current, file)
             loaded = current
@@ -139,8 +145,9 @@ def conf_mat(model):
                 xticklabels=labels, yticklabels=labels)
     plt.ylabel('Actual')
     plt.xlabel('Predicted')
-    plt.show()
+    plt.tight_layout()
 
+    return Graph().create_graph(plt)
 
 def process(text):
     tokens = TextBlob(text).words
@@ -184,11 +191,13 @@ def get_artist(name):
     new_df = new_df.sort_values('year', axis=0).reset_index(drop=True)
     album_list.sort(key=lambda x: x['year'])
     new_df['title'] = new_df['title'].apply(lambda x: x[:15] + '...' if len(x) >= 15 else x)
-
-    sns.lineplot(new_df['title'], new_df['score'])
-    plt.xticks(rotation=45)
+    sns.barplot(new_df['title'], new_df['score'], alpha=0.3)
+    sns.lineplot(new_df['title'], new_df['score'], sort=False)
+    plt.xticks(rotation=60)
     plt.tight_layout()
+
     graph = Graph().create_graph(plt)
+
     return album_list, graph
 
 
@@ -222,8 +231,8 @@ def display_scores():
 if __name__ == '__main__':
     # blobbing()
     # artist_info('queen')
-    # get_artist('queens of the stone age')
+    get_artist('eminem')
     # review_content(22703)
     # word_cloud()
     # display_scores()
-    compare_models()
+    #compare_models()

@@ -9,7 +9,7 @@ function liveSearch(value){
             success: function(data){
                 var res = "";
                 for(i in data.results){
-                    res += "<option onclick ='myfunction(this.text)'>"+data.results[i]+"</option>";
+                    res += "<option onclick='myfunction(this.text)'>"+data.results[i]+"</option>";
                 }
                 $("#results").html(res);
             }
