@@ -30,9 +30,8 @@ class Graph:
 
         plt.xticks(rotation=60)
         plt.tight_layout()
-        plt.show()
 
-        #return self.create_graph(plt)
+        return self.create_graph(plt)
 
     def weekday_score(self):
         conn = sqlite3.connect('pitchfork.sqlite')
@@ -99,13 +98,13 @@ class Graph:
         df = df.head(5).append(df.tail(5))
         class_list = ['high' if index < 5 else 'low' for index, item in enumerate(df.author)]
         df['class'] = class_list
-        print(df)
         clrs = ['orange' if index < 5 else 'yellow' for index, item in enumerate(df.author)]
         g = sns.barplot('author', 'avg(score)', data=df, palette=clrs)
 
         plt.xticks(rotation=60)
         plt.tight_layout()
-        plt.show()
+
+        return self.create_graph(plt)
 
     def create_graph(self, plt):
         img = io.BytesIO()
@@ -113,11 +112,18 @@ class Graph:
         img.seek(0)
         graph_url = base64.b64encode(img.getvalue()).decode()
         plt.close()
+
         return f'data:image/png;base64,{graph_url}'
 
     def all_graphs(self):
-        graphs = {'artists_avg': self.artists_avg(), 'weekday_score': self.weekday_score(), 'genre_change': self.genre_change(),
-                  'genre_avg': self.genre_avg(), 'author_avg': self.author_avg()}
+        graphs = {
+            'artists_avg': self.artists_avg(),
+            'weekday_score': self.weekday_score(),
+            'genre_change': self.genre_change(),
+            'genre_avg': self.genre_avg(),
+            'author_avg': self.author_avg()
+        }
+
         return graphs
 
 

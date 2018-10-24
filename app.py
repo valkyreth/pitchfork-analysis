@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, request, url_for, g, flash
 import json
 import sqlite3 as sql
 from sentiment import get_artist, review_content, get_score, conf_mat, predictor
-from graphs import *
+from graphs import Graph
 
 app = Flask(__name__)
 app.secret_key = "key_pitchfork"
@@ -72,6 +72,7 @@ def models(name):
 @app.route('/insights', methods=['GET', 'POST'])
 def insights():
     graphs = Graph().all_graphs()
+    print(graphs)
     return render_template('graphs.html', graphs=graphs)
 
 
