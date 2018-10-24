@@ -1,5 +1,5 @@
 from flask import Flask, render_template, redirect, request, url_for, flash
-from sentiment import predictor, artist_info, get_artist, review_content, get_score, conf_mat
+from sentiment import predictor, artist_info, get_artist, review_content, get_score, conf_mat, get_albums, get_genres
 import json
 from graphs import *
 
@@ -9,7 +9,8 @@ app.secret_key = "key_pitchfork"
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    genres = get_genres()
+    return render_template('index.html', genres=genres)
 
 @app.route('/predict')
 def predict():
@@ -56,6 +57,13 @@ def models(name):
     score = get_score(name)
     graph = conf_mat(name)
     return render_template(f'{name}.html', score=score, graph=graph)
+
+@app.route('/genre_albums', methods=['GET', 'POST'])
+def genre_albums():
+    name = request.form['Genre']
+    print(name)
+    albums = get_albums(name)
+    return render_template('albums.html', albums=albums)
 
 if __name__ == "__main__":
     app.run(debug=True)

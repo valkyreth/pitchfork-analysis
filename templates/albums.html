@@ -1,0 +1,25 @@
+{% extends 'header.html' %}
+
+{% block body %}
+    <style>
+        table {
+
+        }
+        td {
+            padding: 10px;
+        }    
+    </style>
+
+    <table border="1">
+        {% for album in albums %}
+        <tr>
+            <td>{{ album[0] }}</td>
+            <td>{{ album[1] }}</td>
+            <td>{{ album[2] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}
+
+

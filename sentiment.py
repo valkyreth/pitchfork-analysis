@@ -231,6 +231,26 @@ def display_scores():
     plt.axis("off")
     plt.show()
 
+def get_albums(name):
+    conn = sqlite3.connect('pitchfork.sqlite')
+    c = conn.cursor()
+    c.execute('select r.title, r.artist, r.score from reviews r, genres g where r.reviewid = g.reviewid and g.genre = ? order by r.score desc limit 100',
+              (name.lower(), ))
+    result = c.fetchall()
+    result = [[item.title() if type(item) == type('') else item for item in row] for row in result]
+    conn.close()
+    return result
+
+def get_genres():
+    conn = sqlite3.connect('pitchfork.sqlite')
+    c = conn.cursor()
+    result = []
+    for row in c.execute('select distinct(genre) from genres'):
+        if row[0] != None: result.append(row[0].title())
+    conn.close()
+    return result
+
+
 if __name__ == '__main__':
     #blobbing()
     #artist_info('queen')
@@ -238,4 +258,6 @@ if __name__ == '__main__':
     #review_content(22703)
     #word_cloud()
     #display_scores()
-    compare_models()
+    #compare_models()
+    get_albums('rock')
+    #get_genres()
