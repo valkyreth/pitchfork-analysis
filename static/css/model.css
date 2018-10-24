@@ -1,0 +1,23 @@
+#wrapper {
+    display: flex;
+}
+.box2
+{
+    flex: 1;
+    height:400px;
+    margin:10px;
+    border-radius:5px;
+}
+.box1 {
+    flex: 0 0 50%;
+    overflow:scroll;
+    height : 590px;
+    overflow-x: hidden;
+    border-radius:10px;
+    margin-top: 5px;
+    padding: 10px 5px;
+    background-color : #ffffff;
+}
+.box1::-webkit-scrollbar {
+ display: none;
+}
