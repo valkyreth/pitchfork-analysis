@@ -11,6 +11,7 @@ sns.set(style="white", context="talk")
 rs = np.random.RandomState(8)
 
 # Set up the matplotlib figure
+
 #f, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(7, 5), sharex=True)
 
 

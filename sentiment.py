@@ -27,10 +27,15 @@ from graphs import Graph
 pd.set_option('display.max_columns', 10)
 pd.set_option('display.width', 200)
 
-# conn = sqlite3.connect('pitchfork.sqlite')
-# c = conn.cursor()
-
 stop_words = set(stopwords.words('english') + list(string.punctuation))
+
+models_simple = {
+    'RandomForestClassifier': RandomForestClassifier(random_state=1),
+    'LinearSVC': LinearSVC(random_state=1),
+    'LogisticRegression': LogisticRegression(),
+    'RidgeClassifier': RidgeClassifier(random_state=1),
+    'MultinomialNB': MultinomialNB()
+}
 
 models = {
     'RandomForestClassifier': RandomForestClassifier(n_estimators=200, random_state=1),
@@ -61,39 +66,30 @@ def get_score(model):
 
 def compare_models():
 
-    with open('X_train', 'rb') as file, open('vectorizer(1)', 'rb') as vfile, open('dataframe', 'rb') as dfile:
-        X_train = pickle.load(file)
-        vectorizer = pickle.load(vfile)
-        df = pickle.load(dfile)
-
-    train, test = train_test_split(df, test_size=0.25, stratify=df.rounded_score, random_state=1)
-
-    X_test = vectorizer.transform(test['processed'].tolist())
-    y_train = train['rounded_score'].tolist()
-    y_test = test['rounded_score'].tolist()
-
     for i in models:
-        model = training(X_train, y_train, models[i])
+        model = training(X_train, y_train, i)
         print(f'{i} : {model.score(X_test, y_test)}')
 
     entries = []
-    for model_name in models:
-        accuracies = cross_val_score(models[model_name], X_train, y_train, scoring='accuracy', cv=5)
+    print('start', time.asctime())
+    for model_name, model in models_simple.items():
+        accuracies = cross_val_score(model, X_train, y_train, scoring='accuracy', cv=3)
         for fold_idx, accuracy in enumerate(accuracies):
             entries.append((model_name, fold_idx, accuracy))
+        print(model_name, 'done', time.asctime())
     cv_df = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
     sns.boxplot(x='model_name', y='accuracy', data=cv_df)
-    sns.stripplot(x='model_name', y='accuracy', data=cv_df,
-                  size=8, jitter=True, edgecolor="gray", linewidth=2)
+    sns.stripplot(x='model_name', y='accuracy', data=cv_df,nsize=8, jitter=True, edgecolor="gray", linewidth=2)
     plt.show()
+
 
 def training(x, y, model):
     try:
-        with open(f'./models/{model.__class__.__name__}', 'rb') as file:
+        with open(f'./models/{model}', 'rb') as file:
             loaded = pickle.load(file)
     except FileNotFoundError:
-        with open(f'./models/{model.__class__.__name__}', 'wb') as file:
-            current = model
+        with open(f'./models/{model}', 'wb') as file:
+            current = models[model]
             current.fit(x,y)
             pickle.dump(current, file)
             loaded = current
@@ -141,13 +137,14 @@ def conf_mat(model):
                 xticklabels=labels, yticklabels=labels)
     plt.ylabel('Actual')
     plt.xlabel('Predicted')
-    #return Graph().create_graph(plt)
-    plt.show()
+    plt.tight_layout()
+
+    return Graph().create_graph(plt)
+
 
 def process(text):
     tokens = TextBlob(text).words
     tokens = [t.lemmatize() for t in tokens if t not in stop_words]
-    #tokens = [re.sub(r'[^\P{P}-]+', '', t) for t in tokens]
     tokens = [t for t in tokens if len(t) > 2]
     if len(tokens) > 0:
         return ' '.join(tokens)
@@ -155,28 +152,18 @@ def process(text):
         return None
 
 def predictor(text):
-    with open('models/LogisticRegression (newton)', 'rb') as mfile, open('vectorizer(1)', 'rb') as vfile:
+    with open('models/LogisticRegression', 'rb') as mfile, open('vectorizer(1)', 'rb') as vfile:
         lr = pickle.load(mfile)
         vectorizer = pickle.load(vfile)
-
     return lr.predict(vectorizer.transform([process(text)]))
 
-def artist_info(query):
-    conn = sqlite3.connect('pitchfork.sqlite')
-    c = conn.cursor()
-    name = (f'%{query}%', )
-    artist_list = []
-    for row in c.execute('select distinct(artist) from artists where artist like ?', name):
-        artist_list.append(row[0].title())
-    conn.close()
-    return artist_list
 
 def get_artist(name):
     conn = sqlite3.connect('pitchfork.sqlite')
-    df = pd.read_sql_query('select r.reviewid, r.title, r.score, r.pub_year, g.genre from reviews r, genres g where artist = ? and r.reviewid = g.reviewid',
+    df = pd.read_sql_query('select r.reviewid, r.title, r.score, r.pub_year, g.genre from reviews r, '
+                           'genres g where artist = ? and r.reviewid = g.reviewid',
                            params=(name.lower(), ), con=conn)
     conn.close()
-
     df_grouped = df.groupby(['title'])
     new_df = pd.DataFrame(columns=['reviewid', 'title', 'score', 'genre'])
 
@@ -196,12 +183,11 @@ def get_artist(name):
     new_df = new_df.sort_values('year', axis=0).reset_index(drop=True)
     album_list.sort(key=lambda x: x['year'])
     new_df['title'] = new_df['title'].apply(lambda x: x[:15] + '...' if len(x) >= 15 else x)
-
-    sns.lineplot(new_df['title'], new_df['score'])
-
-    # ax.tick_params(axis='x', labelsize='small')
-    plt.xticks(rotation=45)
+    sns.barplot(new_df['title'], new_df['score'], alpha=0.3)
+    sns.lineplot(new_df['title'], new_df['score'], sort=False)
+    plt.xticks(rotation=60)
     plt.tight_layout()
+
     graph = Graph().create_graph(plt)
 
     return album_list, graph
@@ -209,7 +195,7 @@ def get_artist(name):
 def review_content(id):
     conn = sqlite3.connect('pitchfork.sqlite')
     c = conn.cursor()
-    reviewid = (id, )
+    reviewid = (id,)
     c.execute('select content from content where reviewid = ?', reviewid)
     content = c.fetchone()[0]
     conn.close()
@@ -225,7 +211,8 @@ def display_scores():
 
     wave_mask = np.array(Image.open("./guitar2.png"))
     image_colors = ImageColorGenerator(wave_mask)
-    wc = WordCloud(width=1280, height=720, mode='RGBA', background_color='white', max_words=2000, mask=wave_mask, color_func=image_colors).fit_words(dict(sorted_scores))
+    wc = WordCloud(width=1280, height=720, mode='RGBA', background_color='white', max_words=2000, mask=wave_mask,
+                   color_func=image_colors).fit_words(dict(sorted_scores))
 
     plt.imshow(wc, interpolation="bilinear")
     plt.axis("off")
@@ -261,3 +248,4 @@ if __name__ == '__main__':
     #compare_models()
     get_albums('rock')
     #get_genres()
+

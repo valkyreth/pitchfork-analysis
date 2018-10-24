@@ -31,7 +31,6 @@ class Graph:
         plt.xticks(rotation=60)
         plt.tight_layout()
 
-
         return self.create_graph(plt)
 
     def weekday_score(self):
@@ -113,11 +112,18 @@ class Graph:
         img.seek(0)
         graph_url = base64.b64encode(img.getvalue()).decode()
         plt.close()
+
         return f'data:image/png;base64,{graph_url}'
 
     def all_graphs(self):
-        graphs = {'artists_avg': self.artists_avg(), 'weekday_score': self.weekday_score(), 'genre_change': self.genre_change(),
-                  'genre_avg': self.genre_avg(), 'author_avg': self.author_avg()}
+        graphs = {
+            'artists_avg': self.artists_avg(),
+            'weekday_score': self.weekday_score(),
+            'genre_change': self.genre_change(),
+            'genre_avg': self.genre_avg(),
+            'author_avg': self.author_avg()
+        }
+
         return graphs
 
 
