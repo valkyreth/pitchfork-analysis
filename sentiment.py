@@ -66,21 +66,26 @@ def get_score(model):
 
 def compare_models():
 
-    for i in models:
-        model = training(X_train, y_train, i)
-        print(f'{i} : {model.score(X_test, y_test)}')
+    scores = {}
 
-    entries = []
-    print('start', time.asctime())
-    for model_name, model in models_simple.items():
-        accuracies = cross_val_score(model, X_train, y_train, scoring='accuracy', cv=3)
-        for fold_idx, accuracy in enumerate(accuracies):
-            entries.append((model_name, fold_idx, accuracy))
-        print(model_name, 'done', time.asctime())
-    cv_df = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
-    sns.boxplot(x='model_name', y='accuracy', data=cv_df)
-    sns.stripplot(x='model_name', y='accuracy', data=cv_df,nsize=8, jitter=True, edgecolor="gray", linewidth=2)
-    plt.show()
+    for model_name, model in models.items():
+        result = training(X_train, y_train, model_name)
+        scores[model_name] = result.score(X_test, y_test)
+        #print(f'{i} : {model.score(X_test, y_test)}')
+
+    return scores
+
+    # entries = []
+    # print('start', time.asctime())
+    # for model_name, model in models_simple.items():
+    #     accuracies = cross_val_score(model, X_train, y_train, scoring='accuracy', cv=3)
+    #     for fold_idx, accuracy in enumerate(accuracies):
+    #         entries.append((model_name, fold_idx, accuracy))
+    #     print(model_name, 'done', time.asctime())
+    # cv_df = pd.DataFrame(entries, columns=['model_name', 'fold_idx', 'accuracy'])
+    # sns.boxplot(x='model_name', y='accuracy', data=cv_df)
+    # sns.stripplot(x='model_name', y='accuracy', data=cv_df,nsize=8, jitter=True, edgecolor="gray", linewidth=2)
+    # plt.show()
 
 
 def training(x, y, model):

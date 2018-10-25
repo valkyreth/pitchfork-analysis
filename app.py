@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, request, url_for, g, flash
 import json
 import sqlite3 as sql
-from sentiment import get_artist, review_content, get_score, conf_mat, predictor, get_albums, get_genres
+from sentiment import get_artist, review_content, get_score, conf_mat, predictor, get_albums, get_genres, compare_models
 from graphs import Graph
 
 app = Flask(__name__)
@@ -80,6 +80,11 @@ def genre_albums():
     name = request.form['Genre']
     albums = get_albums(name)
     return render_template('albums.html', albums=albums)
+
+@app.route('/comparison', methods=['GET', 'POST'])
+def comparison():
+    scores = compare_models()
+    return render_template('comparison.html', scores=scores)
 
 
 if __name__ == "__main__":

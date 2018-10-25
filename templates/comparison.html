@@ -1,0 +1,23 @@
+{% extends 'header.html' %}
+
+{% block body %}
+    <style>
+        td {
+            padding: 10px;
+        }    
+    </style>
+
+    <table>
+        {% for model_name, score in scores.items() %}
+        <tr>
+            <td>{{ model_name }}</td>
+            <td>{{ score }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <img src="{{ url_for('static', filename='images/model_comparison.png') }}"/>
+
+{% endblock %}
+
+
