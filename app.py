@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, request, url_for, g, flash
 import json
 import sqlite3 as sql
 from sentiment import get_artist, review_content, get_score, conf_mat, predictor, get_albums, get_genres, compare_models
+from sentiment import important_features
 from graphs import Graph
 
 app = Flask(__name__)
@@ -86,6 +87,10 @@ def comparison():
     scores = compare_models()
     return render_template('comparison.html', scores=scores)
 
+@app.route('/analysis', methods=['GET', 'POST'])
+def analysis():
+    tfidf = important_features()
+    return render_template('analysis.html', tfidf=tfidf)
 
 if __name__ == "__main__":
     app.run(debug=True)

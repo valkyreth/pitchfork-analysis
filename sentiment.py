@@ -17,8 +17,6 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import matplotlib.pyplot as plt
 import time
-import io
-import base64
 from wordcloud import WordCloud, ImageColorGenerator
 import numpy as np
 from PIL import Image
@@ -41,7 +39,7 @@ models = {
     'RandomForestClassifier': RandomForestClassifier(n_estimators=200, random_state=1),
     'LinearSVC': LinearSVC(multi_class='crammer_singer', random_state=1),
     'LogisticRegression': LogisticRegression(solver='newton-cg', multi_class='multinomial'),
-    #'KNeighborsClassifier': KNeighborsClassifier(),
+    'KNeighborsClassifier': KNeighborsClassifier(),
     'RidgeClassifier': RidgeClassifier(random_state=1),
     #'MLPClassifier': MLPClassifier(random_state=1),
     'MultinomialNB': MultinomialNB()
@@ -206,7 +204,7 @@ def review_content(id):
     conn.close()
     return content
 
-def display_scores():
+def important_features():
     with open('X_train', 'rb') as file, open('vectorizer(1)', 'rb') as vfile:
         tfidf_result = pickle.load(file)
         vectorizer = pickle.load(vfile)
@@ -214,14 +212,17 @@ def display_scores():
     scores = zip(vectorizer.get_feature_names(), np.asarray(tfidf_result.sum(axis=0)).ravel())
     sorted_scores = sorted(scores, key=lambda x: x[1], reverse=True)
 
-    wave_mask = np.array(Image.open("./guitar2.png"))
-    image_colors = ImageColorGenerator(wave_mask)
-    wc = WordCloud(width=1280, height=720, mode='RGBA', background_color='white', max_words=2000, mask=wave_mask,
-                   color_func=image_colors).fit_words(dict(sorted_scores))
+    # wave_mask = np.array(Image.open("./guitar2.png"))
+    # image_colors = ImageColorGenerator(wave_mask)
+    # wc = WordCloud(width=1280, height=720, mode='RGBA', background_color='white', max_words=2000, mask=wave_mask,
+    #                color_func=image_colors).fit_words(dict(sorted_scores))
+    #
+    # plt.imshow(wc, interpolation="bilinear")
+    # plt.axis("off")
 
-    plt.imshow(wc, interpolation="bilinear")
-    plt.axis("off")
-    plt.show()
+    #return Graph().create_graph(plt)
+    return dict(sorted_scores[:50])
+    #plt.show()
 
 def get_albums(name):
     conn = sqlite3.connect('pitchfork.sqlite')
